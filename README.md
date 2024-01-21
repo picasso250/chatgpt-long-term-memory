@@ -14,8 +14,8 @@ This Python script implements a chat-based assistant using OpenAI's GPT-3.5 mode
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/yourusername/your-repo.git
-    cd your-repo
+    git clone https://github.com/picasso250/chatgpt-long-term-memory.git
+    cd chatgpt-long-term-memory
     ```
 
 2. Install dependencies:
@@ -26,7 +26,7 @@ This Python script implements a chat-based assistant using OpenAI's GPT-3.5 mode
 
 3. Set up the OpenAI API key:
 
-    - Obtain an API key from [OpenAI](https://beta.openai.com/signup/).
+    - Obtain an API key from [OpenAI](https://platform.openai.com/api-keys).
     - Set the API key as an environment variable:
 
         ```bash
@@ -38,7 +38,7 @@ This Python script implements a chat-based assistant using OpenAI's GPT-3.5 mode
 1. Run the script:
 
     ```bash
-    python chat_assistant.py
+    python bot.py
     ```
 
 2. Interact with the assistant by typing messages. Type "exit" to end the conversation.
