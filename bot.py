@@ -2,9 +2,16 @@ import os
 import json,openai
 from openai import OpenAI
 from colorama import Fore, Style, init
+from memory_handler import save_to_file, read_from_file, append_to_memory
+
 
 # Initialize colorama
 init()
+
+# 定义颜色
+GRAY = Fore.LIGHTBLACK_EX + Style.BRIGHT
+RESET = Fore.RESET + Style.RESET_ALL
+
 # Load OpenAI API key from environment variable
 api_key = os.getenv("OPENAI_API_KEY")
 
@@ -13,32 +20,8 @@ if not api_key:
     raise ValueError("OpenAI API key is missing. Set the OPENAI_API_KEY environment variable.")
 
 openai.api_key = api_key
-# File path where you want to save and read the data
-file_path = "long_term_memory.txt"
 
 messages = []
-
-def save_to_file(data):
-    global messages
-    messages=[]
-    # Open the file in append mode
-    with open(file_path, 'w') as file:
-        # Append the data to the file
-        file.write(data + "\n")  # Add a newline for better formatting
-
-def read_from_file():
-    # Open the file in read mode
-    with open(file_path, 'r') as file:
-        # Read the content from the file
-        content = file.read()
-    return content
-
-def append_to_memory(data):
-    # Open the file in append mode
-    with open(file_path, 'a') as file:
-        # Append the data to the file
-        file.write("\n" + data + "\n")  # Add a newline for better formatting
-
 
 tools = [
     {
@@ -85,7 +68,7 @@ def chat_with_memory(messages):
     # Read existing long-term memory data
     memory_data = read_from_file()
 
-    system_prompt = f"You are a helpful assistant, with a long term memory file: `long_term_memory.txt`(you can update it!):\n```\n{memory_data}\n```\n"
+    system_prompt = f"You are a helpful assistant, always respond, with a long term memory file: `long_term_memory.txt`(you can update it!):\n```\n{memory_data}\n```\n"
     # print(f"System: {system_prompt}")
 
     messages_with_system = [{"role": "system", "content": system_prompt}] + messages
@@ -111,6 +94,8 @@ def chat_with_memory(messages):
 
             # Call the function with the provided arguments
             result = function_to_call(**function_args)
+            print(f"{GRAY}Function Name: {function_name}{RESET}")
+            print(f"{GRAY}Arguments: {tool_call.function.arguments}{RESET}")
 
     # Get the model's reply
     model_reply = response.choices[0].message.content
