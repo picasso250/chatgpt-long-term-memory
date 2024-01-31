@@ -50,6 +50,15 @@ def chat_with_memory(messages):
     memory_data = read_from_file()
 
     system_prompt = f"You are a helpful assistant, always respond, with a long term memory file: `long_term_memory.txt`(you can update it!):\n```\n{memory_data}\n```\n"
+
+    system_prompt = f"""
+You are a helpful assistant, always respond, with a long term memory file: `long_term_memory.txt` (you can update it!):
+```
+{memory_data}
+```
+你的能力
+- 使用python代码在当前环境执行操作
+"""
     
     messages_with_system = [{"role": "system", "content": system_prompt}] + messages
 
@@ -82,16 +91,34 @@ def chat_with_memory(messages):
 
     # print(function_name,arguments)
     if function_name:
+        print(f"{GRAY}{function_name}{RESET}",f"{GRAY}{arguments}{RESET}")
         available_functions = {
             "append_to_memory": append_to_memory,
-            "save_to_file": save_to_file,
         }  
-        function_to_call = available_functions[function_name]
-        function_args = json.loads(arguments)
+        if function_name=='python':
 
-        # Call the function with the provided arguments
-        result = function_to_call(**function_args)
-        print(f"{GRAY}{function_name}{RESET}",f"{GRAY}{arguments}{RESET}")
+            code = arguments
+
+            # 使用exec执行给定的代码
+            exec(code)
+            
+            # 获取代码的局部变量字典
+            local_vars = locals()
+            
+            # 获取代码的最后一行
+            last_line = code.strip().split('\n')[-1].strip()
+            
+            # 如果最后一行是变量名，则打印该变量的值
+            if last_line in local_vars:
+                print(f"{last_line} =", local_vars[last_line])
+
+        else:
+            function_to_call = available_functions[function_name]
+            function_args = json.loads(arguments)
+
+            # Call the function with the provided arguments
+            result = function_to_call(**function_args)
+            print(result)
 
     messages.append({"role": "assistant", "content": message})
     return messages
