@@ -52,10 +52,11 @@ def chat_with_memory(messages):
     system_prompt = f"You are a helpful assistant, always respond, with a long term memory file: `long_term_memory.txt`(you can update it!):\n```\n{memory_data}\n```\n"
 
     system_prompt = f"""
-You are a helpful assistant, always respond, with a long term memory file: `long_term_memory.txt` (you can update it!):
+You are a helpful assistant, with a memory file: `long_term_memory.txt` (utf-8 encoded, you can update it!):
 ```
 {memory_data}
 ```
+
 你的能力
 - 使用python代码在当前环境执行操作
 """
@@ -132,7 +133,7 @@ while True:
         print(f"{Fore.YELLOW}Bot: Goodbye!{Style.RESET_ALL}")
         break
     elif user_input == "!":
-        user_input = "根据以上对话，向 `long_term_memory.txt` 追加信息。"
+        user_input = "根据对话，向 `long_term_memory.txt` 追加信息。"
 
     messages.append({"role": "user", "content": user_input})
     # Call the chat_with_memory function or any other function you want to use
