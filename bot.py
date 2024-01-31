@@ -4,7 +4,6 @@ from openai import OpenAI
 from colorama import Fore, Style, init
 from memory_handler import save_to_file, read_from_file, append_to_memory
 
-
 # Initialize colorama
 init()
 
@@ -27,23 +26,6 @@ tools = [
     {
         "type": "function",
         "function": {
-            "name": "save_to_file",
-            "description": "Save data to the long-term memory file",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "data": {
-                        "type": "string",
-                        "description": "The data to be saved to the long-term memory file"
-                    }
-                },
-                "required": ["data"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "append_to_memory",
             "description": "Append data to the long-term memory file",
             "parameters": {
@@ -63,45 +45,56 @@ tools = [
 from openai import OpenAI
 client = OpenAI()
 
-
 def chat_with_memory(messages):
     # Read existing long-term memory data
     memory_data = read_from_file()
 
     system_prompt = f"You are a helpful assistant, always respond, with a long term memory file: `long_term_memory.txt`(you can update it!):\n```\n{memory_data}\n```\n"
-    # print(f"System: {system_prompt}")
-
+    
     messages_with_system = [{"role": "system", "content": system_prompt}] + messages
 
-    # Call the OpenAI API
+    # Call the OpenAI API with stream=True
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=messages_with_system,
         tools=tools,
+        stream=True  # Set stream=True for streaming responses
     )
-    # print(response)
 
-    tool_calls = response.choices[0].message.tool_calls
-    if tool_calls:
+    print(f"{Fore.YELLOW}Bot: {Style.RESET_ALL}",end='')
+    arguments=''
+    function_name=''
+    message=''
+    for chunk in response:
+        # print(chunk)
+        if chunk.choices:
+            generated_text = chunk.choices[0].delta.content
+            if generated_text is not None:
+                print(generated_text,end='')
+                message+=generated_text
+        if chunk.choices[0].delta.tool_calls:
+            for tool_call in chunk.choices[0].delta.tool_calls:
+                if tool_call.function.name:
+                    function_name = tool_call.function.name
+                arguments += tool_call.function.arguments
+
+    print()
+
+    # print(function_name,arguments)
+    if function_name:
         available_functions = {
             "append_to_memory": append_to_memory,
             "save_to_file": save_to_file,
         }  
-        for tool_call in tool_calls:
-            function_name = tool_call.function.name
-            function_to_call = available_functions[function_name]
-            function_args = json.loads(tool_call.function.arguments)
+        function_to_call = available_functions[function_name]
+        function_args = json.loads(arguments)
 
-            # Call the function with the provided arguments
-            result = function_to_call(**function_args)
-            print(f"{GRAY}Function Name: {function_name}{RESET}")
-            print(f"{GRAY}Arguments: {tool_call.function.arguments}{RESET}")
+        # Call the function with the provided arguments
+        result = function_to_call(**function_args)
+        print(f"{GRAY}{function_name}{RESET}",f"{GRAY}{arguments}{RESET}")
 
-    # Get the model's reply
-    model_reply = response.choices[0].message.content
-    messages.append({"role": "assistant", "content": model_reply if model_reply else ""})
-
-    return model_reply
+    messages.append({"role": "assistant", "content": message})
+    return messages
 
 
 while True:
@@ -112,11 +105,8 @@ while True:
         print(f"{Fore.YELLOW}Bot: Goodbye!{Style.RESET_ALL}")
         break
     elif user_input == "!":
-        user_input = "organize `long_term_memory.txt` and save it.(收集新的信息，删除不重要的信息)"
+        user_input = "根据以上对话，向 `long_term_memory.txt` 追加信息。"
 
     messages.append({"role": "user", "content": user_input})
     # Call the chat_with_memory function or any other function you want to use
-    bot_reply = chat_with_memory(messages)
-
-    # Print the bot's reply in green
-    print(f"{Fore.GREEN}Bot:{Style.RESET_ALL} {bot_reply}")
+    messages = chat_with_memory(messages)
